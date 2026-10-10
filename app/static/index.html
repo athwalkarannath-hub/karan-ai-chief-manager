@@ -1,0 +1,21 @@
+Karan AI Chief Managerbody{font-family:system-ui;margin:0;background:#f5f7fb;color:#172033}main{max-width:850px;margin:auto;padding:18px}.card{background:white;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 3px 16px #00000010}textarea,input,button{width:100%;box-sizing:border-box;padding:13px;border-radius:12px;border:1px solid #ccd3df;font-size:16px}button{background:#111827;color:white;border:0;margin-top:10px;font-weight:700}.muted{color:#667085}.pill{display:inline-block;padding:5px 9px;border-radius:20px;background:#eef2ff;margin:3px}.danger{background:#fff1f2}.ok{background:#ecfdf3}.row{display:flex;gap:8px}.row>*{flex:1}pre{white-space:pre-wrap;background:#f8fafc;padding:12px;border-radius:10px}
+
+ЁЯдЦ Karan AI Chief Manager
+
+Owner-controlled Manager тАФ command тЖТ plan тЖТ approval тЖТ task тЖТ result
+
+рдХрд╛рдо рдмрддрд╛рдУ
+
+Manager рдХреЛ рдХрд╛рдо рджреЛ
+
+System status
+
+рд▓реЛрдб рд╣реЛ рд░рд╣рд╛ рд╣реИтАж
+
+Recent tasks
+
+Agents
+
+Approvals
+
+async function api(u,o){let r=await fetch(u,o);let j=await r.json();if(!r.ok)throw new Error(j.detail||'Error');return j}async function refresh(){let s=await api('/api/state');document.getElementById('status').innerHTML='<span class="pill ok">Backend ON</span> <span class="pill">Agents '+s.agents.length+'</span> <span class="pill">Tasks '+s.tasks.length+'</span>';document.getElementById('tasks').innerHTML=s.tasks.length?s.tasks.map(t=>`<div class="card"><b>${esc(t.command)}</b><p>${esc(t.plan)}</p><span class="pill">${t.status}</span>${t.status==='planned'?`<button onclick="run('${t.id}')">Run task</button>`:''}${t.result?`<pre>${esc(t.result)}</pre>`:''}</div>`).join(''):'No tasks yet';document.getElementById('agents').innerHTML=s.agents.map(a=>`<div class="card"><b>${esc(a.name)}</b> тАФ ${esc(a.role)} <span class="pill">${a.status}</span></div>`).join('');document.getElementById('approvals').innerHTML=s.approvals.length?s.approvals.map(a=>`<div class="card danger"><b>Approval needed</b><p>${esc(a.reason)}</p><span class="pill">${a.status}</span>${a.status==='pending'?`<div class="row"><button onclick="decide('${a.id}',true)">Approve</button><button onclick="decide('${a.id}',false)">Reject</button></div>`:''}</div>`).join(''):'No pending approvals'}function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}async function send(){let c=document.getElementById('cmd').value.trim();if(!c)return;document.getElementById('reply').innerHTML='Manager рдХрд╛рдо рд╕рдордЭ рд░рд╣рд╛ рд╣реИтАж';try{let j=await api('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({command:c})});document.getElementById('reply').innerHTML=`<pre>${esc(j.plan)}</pre><span class="pill">${j.status}</span>`;refresh()}catch(e){document.getElementById('reply').innerHTML='<p class="danger">'+esc(e.message)+'</p>'}}async function run(id){try{await api('/api/tasks/'+id+'/run',{method:'POST'});refresh()}catch(e){alert(e.message)}}async function decide(id,a){await api('/api/approvals/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approved:a})});refresh()}refresh();setInterval(refresh,5000)
