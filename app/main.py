@@ -3,8 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -13,7 +12,6 @@ DB = BASE / "manager.db"
 load_dotenv(BASE / ".env")
 
 app = FastAPI(title="Karan AI Chief Manager", version="1.0.0")
-app.mount("/static", StaticFiles(directory=str(BASE / "app" / "static")), name="static")
 
 def now(): 
     return datetime.now(timezone.utc).isoformat()
@@ -66,8 +64,6 @@ def local_plan(command: str):
         plan = "Create a new specialist agent only after owner approval. Define its role, limits and reporting format."
     elif "research" in low or "market" in low or "समस्या" in low or "problem" in low:
         plan = "Research the requested market/problem, collect evidence, rank opportunities, and return a short action list."
-    elif "company" in low or "कंपनी" in low:
-        plan = "Break the company request into research, business model, product, sales, operations and compliance tasks; ask owner approval before external commitments."
     else:
         plan = "Understand the request, split it into executable steps, run only permitted steps, and report the result to the owner."
     return plan, high
@@ -90,10 +86,120 @@ def ai_plan(command: str):
         log("ai_fallback", str(e)[:500])
         return local_plan(command)
 
-@app.get("/", response_class=FileResponse)
+@app.get("/", response_class=HTMLResponse)
 def home():
-    html_path = BASE / "app" / "static" / "index.html"
-    return FileResponse(str(html_path))
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karan AI Chief Manager</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0; background: #f5f7fb; color: #172033; padding: 18px; }
+        main { max-width: 850px; margin: auto; }
+        .card { background: white; border-radius: 18px; padding: 16px; margin: 12px 0; box-shadow: 0 3px 16px #00000010; }
+        textarea, input, button { width: 100%; box-sizing: border-box; padding: 13px; border-radius: 12px; border: 1px solid #ccd3df; font-size: 16px; margin-top: 8px; }
+        button { background: #111827; color: white; border: 0; font-weight: 700; cursor: pointer; }
+        .muted { color: #667085; }
+        .pill { display: inline-block; padding: 5px 9px; border-radius: 20px; background: #eef2ff; margin: 3px; font-size: 14px; }
+        pre { white-space: pre-wrap; background: #f8fafc; padding: 12px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <main>
+        <h2>Karan AI Chief Manager</h2>
+        <p class="muted">Owner-controlled Manager System</p>
+        
+        <div class="card">
+            <h3>Enter Command</h3>
+            <textarea id="cmd" rows="3" placeholder="Type your command here..."></textarea>
+            <button onclick="send()">Submit Command</button>
+            <div id="reply"></div>
+        </div>
+
+        <div class="card">
+            <h3>Pending Approvals</h3>
+            <div id="approvals">Loading...</div>
+        </div>
+
+        <div class="card">
+            <h3>Agents</h3>
+            <div id="agents">Loading...</div>
+        </div>
+
+        <div class="card">
+            <h3>Recent Tasks</h3>
+            <div id="tasks">Loading...</div>
+        </div>
+    </main>
+
+    <script>
+        async function api(url, method='GET', body=null) {
+            let opts = { method, headers: {'Content-Type': 'application/json'} };
+            if(body) opts.body = JSON.stringify(body);
+            let r = await fetch(url, opts);
+            let data = await r.json();
+            if(!r.ok) throw new Error(data.detail || 'Error');
+            return data;
+        }
+
+        async function refresh() {
+            try {
+                let s = await api('/api/state');
+                document.getElementById('tasks').innerHTML = s.tasks.length ? s.tasks.map(t => `
+                    <div style="border-bottom: 1px solid #eee; padding: 8px 0;">
+                        <b>Command:</b> ${t.command}<br>
+                        <b>Plan:</b> ${t.plan}<br>
+                        <span class="pill">${t.status}</span>
+                        ${t.status === 'planned' ? `<button style="width:auto; padding:5px 10px;" onclick="run('${t.id}')">Run Task</button>` : ''}
+                        ${t.result ? `<pre>${t.result}</pre>` : ''}
+                    </div>
+                `).join('') : 'No tasks yet';
+
+                document.getElementById('agents').innerHTML = s.agents.map(a => `
+                    <span class="pill"><b>${a.name}</b> (${a.role}) - ${a.status}</span>
+                `).join('');
+
+                document.getElementById('approvals').innerHTML = s.approvals.length ? s.approvals.map(a => `
+                    <div style="border-bottom: 1px solid #eee; padding: 8px 0;">
+                        <p>${a.reason}</p>
+                        ${a.status === 'pending' ? `
+                            <button style="width:auto; padding:6px 12px;" onclick="decide('${a.id}', true)">Approve</button>
+                            <button style="width:auto; padding:6px 12px; background:#ef4444;" onclick="decide('${a.id}', false)">Reject</button>
+                        ` : `<span class="pill">${a.status}</span>`}
+                    </div>
+                `).join('') : 'No pending approvals';
+            } catch(e) { console.error(e); }
+        }
+
+        async function send() {
+            let cmd = document.getElementById('cmd').value.trim();
+            if(!cmd) return;
+            try {
+                let j = await api('/api/command', 'POST', { command: cmd });
+                document.getElementById('reply').innerHTML = `<pre>Plan: ${j.plan}\\nStatus: ${j.status}</pre>`;
+                document.getElementById('cmd').value = '';
+                refresh();
+            } catch(e) {
+                document.getElementById('reply').innerHTML = `<p style="color:red;">${e.message}</p>`;
+            }
+        }
+
+        async function run(id) {
+            try { await api(`/api/tasks/${id}/run`, 'POST'); refresh(); }
+            catch(e) { alert(e.message); }
+        }
+
+        async function decide(id, approved) {
+            try { await api(`/api/approvals/${id}`, 'POST', { approved }); refresh(); }
+            catch(e) { alert(e.message); }
+        }
+
+        refresh();
+        setInterval(refresh, 5000);
+    </script>
+</body>
+</html>"""
 
 @app.get("/api/health")
 def health(): 
@@ -158,31 +264,6 @@ def decide(approval_id: str, body: ApprovalIn):
     c.close()
     log("approval_decision", f"{approval_id}:{status}")
     return {"approval_id": approval_id, "status": status}
-
-@app.post("/api/agents")
-def create_agent(body: AgentIn):
-    if not body.name.strip() or not body.role.strip(): 
-        raise HTTPException(400, "Name and role required")
-    aid = str(uuid.uuid4())
-    c = db()
-    c.execute("INSERT INTO agents VALUES(?,?,?,?,?)", (aid, body.name.strip(), body.role.strip(), 'pending', now()))
-    c.commit()
-    c.close()
-    log("agent_requested", f"{body.name}:{body.role}")
-    return {"agent_id": aid, "status": "pending", "message": "Agent registered. Owner must approve activation before it can execute work."}
-
-@app.post("/api/agents/{agent_id}/activate")
-def activate_agent(agent_id: str):
-    c = db()
-    r = c.execute("SELECT * FROM agents WHERE id=?", (agent_id,)).fetchone()
-    if not r: 
-        c.close()
-        raise HTTPException(404, "Agent not found")
-    c.execute("UPDATE agents SET status='active' WHERE id=?", (agent_id,))
-    c.commit()
-    c.close()
-    log("agent_activated", agent_id)
-    return {"agent_id": agent_id, "status": "active", "message": "Agent activated successfully."}
 
 if __name__ == "__main__":
     import uvicorn
