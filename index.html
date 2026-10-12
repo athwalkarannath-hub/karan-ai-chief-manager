@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karan AI Chief Manager</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b1020;
+      color: #eef2ff;
+    }
+    header {
+      padding: 22px 18px;
+      background: #121a30;
+      border-bottom: 1px solid #293653;
+    }
+    header h1 { margin: 0 0 8px; font-size: 23px; }
+    header p { margin: 0; color: #a9b8d6; }
+    main { max-width: 850px; margin: auto; padding: 18px; }
+    .card {
+      background: #141e35;
+      border: 1px solid #2b3a59;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    h2 { margin-top: 0; font-size: 18px; }
+    .status { color: #7ee7b1; }
+    textarea, input {
+      width: 100%;
+      background: #0b1020;
+      color: white;
+      border: 1px solid #394967;
+      border-radius: 9px;
+      padding: 12px;
+      font-size: 16px;
+      margin: 8px 0;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    button {
+      background: #6d8cff;
+      color: #071126;
+      border: 0;
+      padding: 12px 16px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 5px 4px 5px 0;
+    }
+    button:disabled { opacity: .5; }
+    pre {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: #0b1020;
+      padding: 12px;
+      border-radius: 9px;
+      color: #c7d5f5;
+    }
+    .muted { color: #a9b8d6; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🤖 Karan AI Chief Manager</h1>
+    <p>तुम्हारा AI मैनेजर — एक कदम एक समय पर</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>सिस्टम स्थिति</h2>
+      <p id="status" class="status">सर्वर जाँचा जा रहा है…</p>
+      <button onclick="checkHealth()">स्थिति दोबारा जाँचें</button>
+    </section>
+
+    <section class="card">
+      <h2>मैनेजर से बात करो</h2>
+      <p class="muted">अपना काम या सवाल लिखो। यह सुविधा सर्वर के उपलब्ध API पर निर्भर है।</p>
+      <textarea id="task" placeholder="उदाहरण: मेरे बिज़नेस के लिए अगले 3 कदम सुझाओ"></textarea>
+      <button id="send" onclick="sendTask()">भेजें</button>
+      <pre id="result">तुम्हारा जवाब यहाँ दिखाई देगा।</pre>
+    </section>
+
+    <section class="card">
+      <h2>ध्यान दें</h2>
+      <p class="muted">यह इंटरफ़ेस है। बाहरी काम, भुगतान या अकाउंट से जुड़ी कार्रवाई अपने-आप नहीं करता। किसी कार्रवाई से पहले अनुमति आवश्यक है।</p>
+    </section>
+  </main>
+
+  <script>
+    async function checkHealth() {
+      const status = document.getElementById("status");
+      status.textContent = "सर्वर जाँचा जा रहा है…";
+      try {
+        const response = await fetch("/api/health");
+        if (!response.ok) throw new Error("HTTP " + response.status);
+        const data = await response.json();
+        status.textContent = "सर्वर चालू है ✓ " + JSON.stringify(data);
+      } catch (error) {
+        status.textContent = "स्थिति जाँच नहीं सकी: " + error.message;
+      }
+    }
+
+    async function sendTask() {
+      const task = document.getElementById("task").value.trim();
+      const result = document.getElementById("result");
+      const button = document.getElementById("send");
+
+      if (!task) {
+        result.textContent = "पहले अपना सवाल या काम लिखो।";
+        return;
+      }
+
+      button.disabled = true;
+      result.textContent = "अनुरोध भेजा जा रहा है…";
+
+      try {
+        const response = await fetch("/api/command", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: task })
+        });
+
+        const data = await response.json();
+        result.textContent = JSON.stringify(data, null, 2);
+        if (!response.ok) {
+          result.textContent = "सर्वर की त्रुटि: " + result.textContent;
+        }
+      } catch (error) {
+        result.textContent = "अनुरोध पूरा नहीं हुआ: " + error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    checkHealth();
+  </script>
+</body>
+</html>
