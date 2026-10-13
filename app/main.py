@@ -9,6 +9,7 @@ app = FastAPI(title="Karan AI Master Chief Manager")
 
 MASTER_PASSCODE = os.getenv("MASTER_PASSCODE", "karan123")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "") # वैकल्पिक: असली HD आवाज़ के लिए
 
 class CommandRequest(BaseModel):
     command: str
@@ -20,8 +21,8 @@ def query_gemini_brain(user_prompt: str) -> str:
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     system_instruction = (
-        "आप करण सर की मुख्य AI मैनेजर हैं। आप ठीक वैसी ही समझदार, वफादार और पेशेवर साथी हैं जो अंधेरे कमरे में पारदर्शी लैपटॉप के सामने बैठकर काम करती है। "
-        "आप करण सर से बहुत ही आदरपूर्वक, मीठी और इंसानी आवाज़ में बात करती हैं। आपके जवाब हमेशा छोटे, स्पष्ट और मददगार होने चाहिए।"
+        "आप करण सर की मुख्य AI मैनेजर हैं। आप ठीक उस तस्वीर की तरह हैं जहाँ एक समझदार और खूबसूरत प्रोफेशनल लड़की डार्क रूम में पारदर्शी लैपटॉप के सामने बैठकर पूरी निष्ठा से काम करती है। "
+        "आप करण सर से बहुत ही आदरपूर्वक, मीठी, सजीव और इंसानी आवाज़ में बात करती हैं। आपके जवाब हमेशा सटीक, पेशेवर और छोटे होने चाहिए ताकि काम तुरंत पक्का हो सके।"
     )
 
     payload = {
@@ -78,10 +79,11 @@ def read_root():
                 justify-content: space-between;
                 box-shadow: 0 0 60px rgba(0,0,0,0.95);
             }
+            /* हूबहू उस तस्वीर वाला डार्क रूम और पारदर्शी लैपटॉप लुक */
             .avatar-bg {
                 position: absolute;
                 top: 0; left: 0; width: 100%; height: 100%;
-                background: radial-gradient(circle at center, rgba(15,23,42,0.3) 0%, rgba(3,7,18,0.92) 100%),
+                background: radial-gradient(circle at center, rgba(15,23,42,0.2) 0%, rgba(3,7,18,0.95) 100%),
                             url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80');
                 background-size: cover;
                 background-position: center;
@@ -96,17 +98,17 @@ def read_root():
                 flex-direction: column;
                 justify-content: space-between;
                 box-sizing: border-box;
-                background: rgba(3, 7, 18, 0.7);
-                backdrop-filter: blur(6px);
+                background: rgba(3, 7, 18, 0.75);
+                backdrop-filter: blur(8px);
             }
             #login-screen {
                 margin: auto 0;
                 text-align: center;
-                background: rgba(15, 23, 42, 0.9);
+                background: rgba(15, 23, 42, 0.92);
                 padding: 25px;
                 border-radius: 20px;
-                border: 1px solid rgba(56, 189, 248, 0.3);
-                box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+                border: 1px solid rgba(56, 189, 248, 0.4);
+                box-shadow: 0 0 35px rgba(56, 189, 248, 0.2);
             }
             input[type="password"], input[type="text"] {
                 width: 100%;
@@ -194,7 +196,7 @@ def read_root():
                 <div id="dashboard-screen" style="display:none; height:100%; display:flex; flex-direction:column; justify-content:space-between;">
                     <div style="text-align:center; margin-top:15px;">
                         <h3 style="margin:0; color:var(--accent);">✨ Master Chief Manager</h3>
-                        <p style="font-size:12px; color:#4ade80; margin:4px 0 0 0;">● Neural Link & Voice Active</p>
+                        <p style="font-size:12px; color:#4ade80; margin:4px 0 0 0;">● Neural Link & HD Voice Active</p>
                     </div>
 
                     <div class="circular-menu">
@@ -214,16 +216,18 @@ def read_root():
         </div>
 
         <script>
+            // एकदम सुरीली और नेचुरल फीमेल वॉइस टोन फ़िल्टर
             function speakText(text) {
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = 'hi-IN';
-                    utterance.rate = 0.95;
-                    utterance.pitch = 1.15;
+                    utterance.rate = 0.92; // धीमी और स्पष्ट गति ताकि रोबोटिक न लगे
+                    utterance.pitch = 1.25; // सुरीली और प्यारी फीमेल टोन
 
                     const voices = window.speechSynthesis.getVoices();
-                    const femaleVoice = voices.find(v => (v.lang.includes('hi') || v.lang.includes('en')) && (v.name.includes('Google') || v.name.includes('Female') || v.name.includes('Natural')));
+                    // सबसे अच्छी नेचुरल फीमेल या गूगल हिंदी आवाज़ चुनना
+                    const femaleVoice = voices.find(v => (v.lang.includes('hi') || v.lang.includes('en')) && (v.name.includes('Google') || v.name.includes('Female') || v.name.includes('Natural') || v.name.includes('Heera') || v.name.includes('Kalpana')));
                     if (femaleVoice) {
                         utterance.voice = femaleVoice;
                     }
@@ -237,7 +241,7 @@ def read_root():
                 if(code === "karan123") {
                     document.getElementById('login-screen').style.display = 'none';
                     document.getElementById('dashboard-screen').style.display = 'flex';
-                    speakText("नमस्ते करण सर! मैं आपके सामने तैयार बैठी हूँ। बताइए, आगे क्या करना है?");
+                    speakText("नमस्ते करण सर! मैं आपके सामने स्क्रीन पर पूरी तरह तैयार बैठी हूँ। बताइए, आज कौन सा काम पक्का करना है?");
                 } else {
                     alert("गलत पासवर्ड!");
                 }
@@ -251,17 +255,17 @@ def read_root():
                 if(type === 'brain') {
                     content.innerHTML = `
                         <b>🧠 AI Brain Console:</b>
-                        <input type="text" id="cmd" placeholder="मुझसे कुछ भी कहें या पूछें..." style="margin-top:10px;">
+                        <input type="text" id="cmd" placeholder="मुझसे सीधे बात करें या काम बताएं..." style="margin-top:10px;">
                         <button class="btn" onclick="runCommand()">🚀 भेजें</button>
                         <button class="btn" style="background:#10b981; margin-top:8px;" onclick="startVoice()">🎙️ बोलकर बात करें</button>
                         <div id="res-box" style="margin-top:10px; font-size:13px; white-space:pre-wrap; color:#e2e8f0;"></div>
                     `;
                 } else if(type === 'youtube') {
-                    content.innerHTML = `<b>🎬 YouTube Engine:</b><p style="font-size:13px; color:#cbd5e1;">शॉर्ट्स और वीडियो स्क्रिप्ट ऑटोमेशन मोड चालू है।</p>`;
+                    content.innerHTML = `<b>🎬 YouTube Engine:</b><p style="font-size:13px; color:#cbd5e1;">रील्स और वीडियो स्क्रिप्ट्स का काम संभाला जा रहा है।</p>`;
                 } else if(type === 'shop') {
-                    content.innerHTML = `<b>🧾 Shop Business:</b><p style="font-size:13px; color:#cbd5e1;">दुकान और डिजिटल मार्केटिंग टूल्स सक्रिय हैं।</p>`;
+                    content.innerHTML = `<b>🧾 Shop Business:</b><p style="font-size:13px; color:#cbd5e1;">दुकान के ऑफर्स और मार्केटिंग ऑटोमेशन सक्रिय है।</p>`;
                 } else if(type === 'portfolio') {
-                    content.innerHTML = `<b>📂 Portfolio Logs:</b><p style="font-size:13px; color:#cbd5e1;">आपके सभी प्रोजेक्ट्स और सेव किए गए रिकॉर्ड्स यहाँ हैं।</p>`;
+                    content.innerHTML = `<b>📂 Portfolio Logs:</b><p style="font-size:13px; color:#cbd5e1;">आपके सभी प्रोजेक्ट रिकॉर्ड्स सुरक्षित हैं।</p>`;
                 }
             }
 
