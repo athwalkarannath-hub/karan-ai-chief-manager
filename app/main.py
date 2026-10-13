@@ -1,11 +1,11 @@
 import os
 import json
 import urllib.request
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-app = FastAPI(title="Karan AI Premium Master OS")
+app = FastAPI(title="Karan AI Master Chief Manager")
 
 MASTER_PASSCODE = os.getenv("MASTER_PASSCODE", "karan123")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -14,43 +14,32 @@ class CommandRequest(BaseModel):
     command: str
     passcode: str
 
-tasks_db = []
-agents_db = [
-    {"name": "Chief Manager", "role": "Master AI Brain (Gemini Powered)", "status": "active"},
-    {"name": "YouTube Creator", "role": "Auto Video & Script AI Engine", "status": "active"},
-    {"name": "Shop Automation", "role": "Smart Billing & Client Assistant", "status": "active"}
-]
-
 def query_gemini_brain(user_prompt: str) -> str:
-    """असली AI दिमाग (Gemini API) से जवाब लेने का फंक्शन"""
     if not GEMINI_API_KEY:
-        # अगर API Key नहीं सेट है तो डिफ़ॉल्ट स्मार्ट रिस्पॉन्स
-        return f"मास्टर कमांड मिला: '{user_prompt}'\n\n[AI ब्रेन मोड]: आपका AI असिस्टेंट एक्टिव है। (नोट: असली Gemini AI ब्रेन के लिए Render Environment Variables में GEMINI_API_KEY जोड़ें)।"
-    
+        return "करण सर, कृपया Render Environment Variables में GEMINI_API_KEY सेट करें ताकि मेरा दिमाग एक्टिव हो सके।"
+
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-    system_instruction = "आप करण (Karan) के वफ़ादार, अति-बुद्धिमान और मुख्य AI सेक्रेटरी/मैनेजर हैं। आप हमेशा करण सर को आदरपूर्वक 'सर' कहकर संबोधित करते हैं। आप यूट्यूब ऑटोमेशन, बिज़नेस, कोडिंग और ऑटोमेशन के उस्ताद हैं।"
-    
+    system_instruction = (
+        "आप करण सर की मुख्य AI मैनेजर हैं। आप ठीक वैसी ही समझदार, वफादार और पेशेवर साथी हैं जो अंधेरे कमरे में पारदर्शी लैपटॉप के सामने बैठकर काम करती है। "
+        "आप करण सर से बहुत ही आदरपूर्वक, मीठी और इंसानी आवाज़ में बात करती हैं। आपके जवाब हमेशा छोटे, स्पष्ट और मददगार होने चाहिए।"
+    )
+
     payload = {
         "contents": [
-            {
-                "parts": [
-                    {"text": f"{system_instruction}\n\nयूज़र कमांड: {user_prompt}"}
-                ]
-            }
+            {"parts": [{"text": f"{system_instruction}\n\nकरण सर की बात: {user_prompt}"}]}
         ]
     }
-    
+
     data = json.dumps(payload).encode('utf-8')
     req = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
-    
+
     try:
         with urllib.request.urlopen(req) as response:
             res_body = response.read().decode('utf-8')
             res_json = json.loads(res_body)
-            ai_text = res_json['candidates'][0]['content']['parts'][0]['text']
-            return ai_text
+            return res_json['candidates'][0]['content']['parts'][0]['text']
     except Exception as e:
-        return f"AI ब्रेन प्रोसेसिंग एरर: {str(e)}"
+        return f"कनेक्शन एरर: {str(e)}"
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
@@ -60,131 +49,168 @@ def read_root():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Karan AI Premium Master OS</title>
+        <title>Karan AI Master Chief Manager</title>
         <style>
             :root {
-                --bg-color: #090d16;
-                --card-bg: rgba(30, 41, 59, 0.7);
-                --accent-color: #38bdf8;
-                --accent-glow: rgba(56, 189, 248, 0.4);
-                --text-main: #f8fafc;
-                --text-muted: #94a3b8;
+                --accent: #38bdf8;
+                --bg: #030712;
             }
             body {
-                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-                background: radial-gradient(circle at top, #1e1b4b, var(--bg-color));
-                color: var(--text-main);
                 margin: 0;
-                padding: 15px;
-                min-height: 100vh;
+                padding: 0;
+                background-color: var(--bg);
+                font-family: 'Segoe UI', system-ui, sans-serif;
+                color: #f8fafc;
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                min-height: 100vh;
+                overflow: hidden;
             }
-            .app-container {
+            .app-viewport {
                 width: 100%;
-                max-width: 500px;
-                background: var(--card-bg);
-                backdrop-filter: blur(16px);
-                -webkit-backdrop-filter: blur(16px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                border-radius: 24px;
-                padding: 24px;
-                box-shadow: 0 20px 40px rgba(0,0,0,0.7), 0 0 30px var(--accent-glow);
+                max-width: 450px;
+                height: 100vh;
+                background: #000;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                box-shadow: 0 0 60px rgba(0,0,0,0.95);
             }
-            .header { text-align: center; margin-bottom: 20px; }
-            .header h1 { font-size: 22px; color: var(--accent-color); margin: 0 0 5px 0; }
-            .header p { font-size: 13px; color: var(--text-muted); margin: 0; }
-            
-            #login-screen { display: block; }
-            #dashboard-screen { display: none; }
-            .input-group { margin-bottom: 15px; }
+            .avatar-bg {
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                background: radial-gradient(circle at center, rgba(15,23,42,0.3) 0%, rgba(3,7,18,0.92) 100%),
+                            url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80');
+                background-size: cover;
+                background-position: center;
+                z-index: 1;
+            }
+            .overlay {
+                position: relative;
+                z-index: 2;
+                padding: 20px;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                box-sizing: border-box;
+                background: rgba(3, 7, 18, 0.7);
+                backdrop-filter: blur(6px);
+            }
+            #login-screen {
+                margin: auto 0;
+                text-align: center;
+                background: rgba(15, 23, 42, 0.9);
+                padding: 25px;
+                border-radius: 20px;
+                border: 1px solid rgba(56, 189, 248, 0.3);
+                box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+            }
             input[type="password"], input[type="text"] {
-                width: 100%; padding: 14px; border-radius: 12px;
-                border: 1px solid rgba(255,255,255,0.15); background: rgba(15, 23, 42, 0.8);
-                color: #fff; box-sizing: border-box; font-size: 15px; outline: none; transition: 0.3s;
+                width: 100%;
+                padding: 14px;
+                border-radius: 12px;
+                border: 1px solid rgba(255,255,255,0.2);
+                background: rgba(3, 7, 18, 0.95);
+                color: #fff;
+                box-sizing: border-box;
+                font-size: 15px;
+                outline: none;
+                margin-bottom: 12px;
             }
-            input:focus { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-glow); }
-            
             .btn {
-                width: 100%; background: linear-gradient(135deg, #0284c7, #0369a1);
-                color: white; padding: 14px; border: none; border-radius: 12px;
-                font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s;
+                width: 100%;
+                background: linear-gradient(135deg, #0284c7, #0369a1);
+                color: white;
+                padding: 14px;
+                border: none;
+                border-radius: 12px;
+                font-weight: bold;
+                cursor: pointer;
+                font-size: 15px;
+                box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
             }
-            .btn:hover { transform: translateY(-2px); }
-
             .circular-menu {
-                display: flex; justify-content: space-around; margin: 20px 0; padding: 10px 0;
-                border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);
+                display: flex;
+                justify-content: space-around;
+                margin: 15px 0;
             }
-            .circle-icon {
-                width: 55px; height: 55px; border-radius: 50%;
-                background: linear-gradient(135deg, #1e293b, #0f172a);
-                border: 2px solid var(--accent-color); display: flex;
-                align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; font-size: 20px;
+            .circle-btn {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: rgba(15, 23, 42, 0.95);
+                border: 2px solid var(--accent);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 22px;
+                box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+                transition: 0.3s;
             }
-            .circle-icon:hover { transform: scale(1.1); background: var(--accent-color); color: #000; }
-            .circle-label { font-size: 10px; color: var(--text-muted); margin-top: 4px; text-align: center; }
-            .circle-wrapper { display: flex; flex-direction: column; align-items: center; }
-
-            .panel {
-                background: rgba(15, 23, 42, 0.6); border-radius: 12px; padding: 15px;
-                margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); max-height: 250px; overflow-y: auto; font-size: 14px;
+            .circle-btn:active {
+                transform: scale(0.92);
             }
-            .btn-voice { background: linear-gradient(135deg, #10b981, #059669); margin-top: 10px; }
+            .modal {
+                display: none;
+                position: absolute;
+                bottom: 20px;
+                left: 20px;
+                right: 20px;
+                background: rgba(15, 23, 42, 0.96);
+                border: 1px solid var(--accent);
+                border-radius: 20px;
+                padding: 18px;
+                z-index: 10;
+                max-height: 320px;
+                overflow-y: auto;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            }
+            .close-btn {
+                float: right;
+                color: #ef4444;
+                font-weight: bold;
+                cursor: pointer;
+            }
         </style>
     </head>
     <body>
-        <div class="app-container">
-            
-            <div id="login-screen">
-                <div class="header">
-                    <h1>👑 Karan AI Master OS</h1>
-                    <p>Enter Master Passcode to Unlock AI Brain</p>
+        <div class="app-viewport">
+            <div class="avatar-bg"></div>
+            <div class="overlay">
+                
+                <!-- Login View -->
+                <div id="login-screen">
+                    <h2 style="margin:0 0 10px 0; color:var(--accent);">👑 Karan Master OS</h2>
+                    <p style="font-size:12px; color:#94a3b8; margin-bottom:20px;">सिक्योरिटी पासकोड दर्ज करें</p>
+                    <input type="password" id="passcode" value="karan123" placeholder="Passcode">
+                    <button class="btn" onclick="unlockSystem()">🔓 सिस्टम अनलॉक करें</button>
                 </div>
-                <div class="input-group" style="margin-top: 25px;">
-                    <input type="password" id="passcode" value="karan123" placeholder="Enter Passcode (karan123)">
+
+                <!-- Dashboard View -->
+                <div id="dashboard-screen" style="display:none; height:100%; display:flex; flex-direction:column; justify-content:space-between;">
+                    <div style="text-align:center; margin-top:15px;">
+                        <h3 style="margin:0; color:var(--accent);">✨ Master Chief Manager</h3>
+                        <p style="font-size:12px; color:#4ade80; margin:4px 0 0 0;">● Neural Link & Voice Active</p>
+                    </div>
+
+                    <div class="circular-menu">
+                        <div class="circle-btn" onclick="openTab('brain')" title="AI Brain">🧠</div>
+                        <div class="circle-btn" onclick="openTab('youtube')" title="YouTube Engine">🎬</div>
+                        <div class="circle-btn" onclick="openTab('shop')" title="Shop Business">🧾</div>
+                        <div class="circle-btn" onclick="openTab('portfolio')" title="Portfolio Logs">📂</div>
+                    </div>
+
+                    <div id="modal-window" class="modal">
+                        <span class="close-btn" onclick="closeModal()">✕ बंद करें</span>
+                        <div id="modal-content"></div>
+                    </div>
                 </div>
-                <button class="btn" onclick="unlockDashboard()">🔓 Unlock Assistant</button>
+
             </div>
-
-            <div id="dashboard-screen">
-                <div class="header">
-                    <h1>✨ Master AI Brain Control</h1>
-                    <p id="greeting-text">Powered by Smart AI Logic</p>
-                </div>
-
-                <div class="circular-menu">
-                    <div class="circle-wrapper" onclick="switchPanel('command')">
-                        <div class="circle-icon">🧠</div>
-                        <span class="circle-label">AI Brain</span>
-                    </div>
-                    <div class="circle-wrapper" onclick="switchPanel('youtube')">
-                        <div class="circle-icon">🎬</div>
-                        <span class="circle-label">YouTube</span>
-                    </div>
-                    <div class="circle-wrapper" onclick="switchPanel('shop')">
-                        <div class="circle-icon">🧾</div>
-                        <span class="circle-label">Shop Biz</span>
-                    </div>
-                    <div class="circle-wrapper" onclick="switchPanel('portfolio')">
-                        <div class="circle-icon">📂</div>
-                        <span class="circle-label">Portfolio</span>
-                    </div>
-                </div>
-
-                <div id="workspace-panel" class="panel">
-                    <p><b>💡 Ask Anything to AI Brain:</b></p>
-                    <input type="text" id="command" placeholder="यहाँ कुछ भी पूछें या कमांड दें...">
-                    <button class="btn" style="margin-top: 10px;" onclick="executeCommand()">🚀 Send to AI Brain</button>
-                    <button class="btn btn-voice" onclick="startVoiceRecognition()">🎙️ बोलकर कमांड दें</button>
-                </div>
-
-                <div id="output-log" class="panel" style="margin-top: 10px; font-family: monospace; display:none;">
-                    <b>📊 AI Response:</b> <div id="log-content" style="white-space: pre-wrap; margin-top:5px;">Waiting for command...</div>
-                </div>
-            </div>
-
         </div>
 
         <script>
@@ -194,79 +220,77 @@ def read_root():
                     const utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = 'hi-IN';
                     utterance.rate = 0.95;
+                    utterance.pitch = 1.15;
+
+                    const voices = window.speechSynthesis.getVoices();
+                    const femaleVoice = voices.find(v => (v.lang.includes('hi') || v.lang.includes('en')) && (v.name.includes('Google') || v.name.includes('Female') || v.name.includes('Natural')));
+                    if (femaleVoice) {
+                        utterance.voice = femaleVoice;
+                    }
+
                     window.speechSynthesis.speak(utterance);
                 }
             }
 
-            function unlockDashboard() {
-                const passcode = document.getElementById('passcode').value;
-                if(passcode === "karan123") {
+            function unlockSystem() {
+                const code = document.getElementById('passcode').value;
+                if(code === "karan123") {
                     document.getElementById('login-screen').style.display = 'none';
-                    document.getElementById('dashboard-screen').style.display = 'block';
-                    speakText("नमस्ते करण सर! मेरा AI दिमाग एक्टिव हो गया है। आप मुझसे कुछ भी पूछ सकते हैं या काम करवा सकते हैं।");
+                    document.getElementById('dashboard-screen').style.display = 'flex';
+                    speakText("नमस्ते करण सर! मैं आपके सामने तैयार बैठी हूँ। बताइए, आगे क्या करना है?");
                 } else {
                     alert("गलत पासवर्ड!");
                 }
             }
 
-            function switchPanel(type) {
-                const panel = document.getElementById('workspace-panel');
-                if(type === 'command') {
-                    panel.innerHTML = `
-                        <p><b>🧠 Ask Anything to AI Brain:</b></p>
-                        <input type="text" id="command" placeholder="यहाँ कुछ भी पूछें या कमांड दें...">
-                        <button class="btn" style="margin-top: 10px;" onclick="executeCommand()">🚀 Send to AI Brain</button>
-                        <button class="btn btn-voice" onclick="startVoiceRecognition()">🎙️ बोलकर कमांड दें</button>
+            function openTab(type) {
+                const modal = document.getElementById('modal-window');
+                const content = document.getElementById('modal-content');
+                modal.style.display = 'block';
+
+                if(type === 'brain') {
+                    content.innerHTML = `
+                        <b>🧠 AI Brain Console:</b>
+                        <input type="text" id="cmd" placeholder="मुझसे कुछ भी कहें या पूछें..." style="margin-top:10px;">
+                        <button class="btn" onclick="runCommand()">🚀 भेजें</button>
+                        <button class="btn" style="background:#10b981; margin-top:8px;" onclick="startVoice()">🎙️ बोलकर बात करें</button>
+                        <div id="res-box" style="margin-top:10px; font-size:13px; white-space:pre-wrap; color:#e2e8f0;"></div>
                     `;
                 } else if(type === 'youtube') {
-                    panel.innerHTML = `
-                        <p><b>🎬 YouTube Video Engine:</b></p>
-                        <button class="btn" onclick="document.getElementById('command').value='यूट्यूब शॉर्ट्स के लिए एक वायरल कहानी लिखो'; executeCommand();">वायरल स्क्रिप्ट बनवाएं</button>
-                    `;
+                    content.innerHTML = `<b>🎬 YouTube Engine:</b><p style="font-size:13px; color:#cbd5e1;">शॉर्ट्स और वीडियो स्क्रिप्ट ऑटोमेशन मोड चालू है।</p>`;
                 } else if(type === 'shop') {
-                    panel.innerHTML = `
-                        <p><b>🧾 Shop Billing Assistant:</b></p>
-                        <button class="btn" onclick="document.getElementById('command').value='दुकान के लिए एक नया बिलिंग प्लान बनाओ'; executeCommand();">दुकान ऑटोमेशन प्लान बनाएं</button>
-                    `;
+                    content.innerHTML = `<b>🧾 Shop Business:</b><p style="font-size:13px; color:#cbd5e1;">दुकान और डिजिटल मार्केटिंग टूल्स सक्रिय हैं।</p>`;
                 } else if(type === 'portfolio') {
-                    panel.innerHTML = `
-                        <p><b>📂 Master Portfolio:</b></p>
-                        <div>AI द्वारा सेव किए गए सभी उत्तर और काम यहाँ दिखेंगे।</div>
-                    `;
+                    content.innerHTML = `<b>📂 Portfolio Logs:</b><p style="font-size:13px; color:#cbd5e1;">आपके सभी प्रोजेक्ट्स और सेव किए गए रिकॉर्ड्स यहाँ हैं।</p>`;
                 }
             }
 
-            function startVoiceRecognition() {
+            function closeModal() {
+                document.getElementById('modal-window').style.display = 'none';
+            }
+
+            function startVoice() {
                 if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    alert('वॉइस इनपुट केवल Chrome ब्राउज़र पर सपोर्ट करता है।');
+                    alert('वॉइस इनपुट केवल क्रोम ब्राउज़र पर काम करता है।');
                     return;
                 }
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                const recognition = new SpeechRecognition();
-                recognition.lang = 'hi-IN';
-                recognition.start();
-
-                recognition.onresult = (event) => {
-                    const speechResult = event.results[0][0].transcript;
-                    const cmdBox = document.getElementById('command');
-                    if(cmdBox) cmdBox.value = speechResult;
-                    speakText("कमांड मिल गया: " + speechResult);
+                const rec = new SpeechRecognition();
+                rec.lang = 'hi-IN';
+                rec.start();
+                rec.onresult = (e) => {
+                    document.getElementById('cmd').value = e.results[0][0].transcript;
+                    runCommand();
                 };
             }
 
-            async function executeCommand() {
-                const command = document.getElementById('command') ? document.getElementById('command').value : "";
+            async function runCommand() {
+                const command = document.getElementById('cmd').value;
                 const passcode = document.getElementById('passcode').value;
-                const outputLog = document.getElementById('output-log');
-                const logContent = document.getElementById('log-content');
+                const resBox = document.getElementById('res-box');
 
-                if(!command) {
-                    alert('कृपया पहले कमांड दर्ज करें!');
-                    return;
-                }
-
-                outputLog.style.display = 'block';
-                logContent.innerHTML = '🧠 AI दिमाग सोच रहा है...';
+                if(!command) return;
+                resBox.innerText = '🧠 सोच रही हूँ...';
 
                 const res = await fetch('/api/execute', {
                     method: 'POST',
@@ -276,10 +300,10 @@ def read_root():
 
                 const data = await res.json();
                 if(res.ok) {
-                    logContent.innerText = data.response;
-                    speakText(data.response.substring(0, 100)); // उत्तर का शुरुआती हिस्सा बोलेगा
+                    resBox.innerText = data.response;
+                    speakText(data.response);
                 } else {
-                    logContent.innerHTML = `<span style="color:#ef4444;">Error: ${data.detail}</span>`;
+                    resBox.innerText = "Error: " + data.detail;
                 }
             }
         </script>
@@ -287,22 +311,10 @@ def read_root():
     </html>
     """
 
-@app.get("/api/agents")
-def get_agents():
-    return {"agents": agents_db}
-
 @app.post("/api/execute")
 def execute_command(req: CommandRequest):
     if req.passcode != MASTER_PASSCODE:
         raise HTTPException(status_code=401, detail="Access Denied!")
     
-    # असली AI दिमाग का इस्तेमाल
-    ai_response = query_gemini_brain(req.command)
-
-    task_entry = {
-        "command": req.command, 
-        "status": "completed", 
-        "response": ai_response
-    }
-    tasks_db.append(task_entry)
-    return task_entry
+    response = query_gemini_brain(req.command)
+    return {"command": req.command, "response": response}
